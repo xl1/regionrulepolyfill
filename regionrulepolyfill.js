@@ -69,7 +69,8 @@
     function RegionNode(regionSelector) {
       this.regionSelector = regionSelector;
       this.rules = [];
-      this.stopped = {};
+      this.timer = {};
+      this.handler = {};
       if (supportType === 'basic') {
         if (document.readyState === 'complete') {
           this.initialize();
@@ -85,7 +86,7 @@
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
         flow = _ref[_i];
         this.update(flow);
-        handler = this.update.bind(this, flow);
+        handler = this.handler[flow.name] = this.update.bind(this, flow);
         for (_j = 0, _len1 = prefixedRegionfragmentchangeEventNames.length; _j < _len1; _j++) {
           eventName = prefixedRegionfragmentchangeEventNames[_j];
           flow.addEventListener(eventName, handler, false);
@@ -94,22 +95,26 @@
       return this;
     };
 
-    RegionNode.prototype.update = function(flow) {
-      var rule, _i, _len, _ref,
+    RegionNode.prototype.update = function(flow, event) {
+      var _base, _name,
         _this = this;
-      if (this.stopped[flow.name]) {
-        return this;
-      }
-      this.stopped[flow.name] = true;
-      this.resetStyleInFlow(flow);
-      _ref = this.rules;
-      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        rule = _ref[_i];
-        this.applyStyleInFlow(flow, rule.selector, rule.className);
-      }
-      setTimeout(function() {
-        return _this.stopped[flow.name] = false;
-      }, 50);
+      (_base = this.timer)[_name = flow.name] || (_base[_name] = setTimeout(function() {
+        var rule, _i, _len, _ref;
+        if (event) {
+          flow.removeEventListener(event.type, _this.handler[flow.name], false);
+        }
+        _ref = _this.rules;
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          rule = _ref[_i];
+          _this.applyStyleInFlow(flow, rule.selector, rule.className);
+        }
+        _this.timer[flow.name] = null;
+        if (event) {
+          return setTimeout(function() {
+            return flow.addEventListener(event.type, _this.handler[flow.name], false);
+          }, 1);
+        }
+      }, 50));
       return this;
     };
 
@@ -135,7 +140,7 @@
     };
 
     RegionNode.prototype.applyStyleInFlow = function(flow, contentSelector, className) {
-      var content, elem, elems, r, region, regions, _i, _j, _k, _l, _len, _len1, _len2, _len3, _ref, _ref1;
+      var content, elem, elems, r, region, regions, _i, _j, _k, _l, _len, _len1, _len2, _len3, _len4, _m, _ref, _ref1, _ref2;
       regions = [];
       _ref = flow.getRegions();
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
@@ -151,15 +156,21 @@
       _ref1 = flow.getContent();
       for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
         content = _ref1[_j];
+        content.classList.remove(className);
+        _ref2 = content.getElementsByClassName(className);
+        for (_k = 0, _len2 = _ref2.length; _k < _len2; _k++) {
+          elem = _ref2[_k];
+          elem.classList.remove(className);
+        }
         elems = [];
         if (content[prefixed.matches](contentSelector)) {
           elems.push(content);
         }
         elems.push.apply(elems, content.querySelectorAll(contentSelector));
-        for (_k = 0, _len2 = elems.length; _k < _len2; _k++) {
-          elem = elems[_k];
-          for (_l = 0, _len3 = regions.length; _l < _len3; _l++) {
-            region = regions[_l];
+        for (_l = 0, _len3 = elems.length; _l < _len3; _l++) {
+          elem = elems[_l];
+          for (_m = 0, _len4 = regions.length; _m < _len4; _m++) {
+            region = regions[_m];
             this.applyStyleInRegion(region, elem, className);
           }
         }
@@ -230,21 +241,6 @@
         etoe: etoe,
         etos: etos
       };
-    };
-
-    RegionNode.prototype.resetStyleInFlow = function(flow) {
-      var content, elem, _i, _j, _len, _len1, _ref, _ref1;
-      _ref = flow.getContent();
-      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        content = _ref[_i];
-        content.className = content.className.replace(/__INSERTED__\d+/g, '');
-        _ref1 = content.querySelectorAll('[class^="__INSERTED__"]');
-        for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
-          elem = _ref1[_j];
-          elem.className = elem.className.replace(/__INSERTED__\d+/g, '');
-        }
-      }
-      return this;
     };
 
     return RegionNode;

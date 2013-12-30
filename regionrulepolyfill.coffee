@@ -59,7 +59,8 @@ class RegionNode
 
   constructor: (@regionSelector) ->
     @rules = []
-    @stopped = {}
+    @timer = {}
+    @handler = {}
     if supportType is 'basic'
       if document.readyState is 'complete' # already loaded
         @initialize()
@@ -69,19 +70,22 @@ class RegionNode
   initialize: ->
     for flow in document[prefixed.getNamedFlows]()
       @update(flow)
-      handler = @update.bind(@, flow)
+      handler = @handler[flow.name] = @update.bind(@, flow)
       for eventName in prefixedRegionfragmentchangeEventNames
         flow.addEventListener eventName, handler, false
     @
-    
-  update: (flow) ->
-    return @ if @stopped[flow.name]
-    @stopped[flow.name] = true
-    @resetStyleInFlow(flow)
-    for rule in @rules
-      @applyStyleInFlow(flow, rule.selector, rule.className)
-    setTimeout =>
-      @stopped[flow.name] = false
+
+  update: (flow, event) ->
+    @timer[flow.name] or= setTimeout =>
+      if event
+        flow.removeEventListener event.type, @handler[flow.name], false
+      for rule in @rules
+        @applyStyleInFlow(flow, rule.selector, rule.className)
+      @timer[flow.name] = null
+      if event
+        setTimeout =>
+          flow.addEventListener event.type, @handler[flow.name], false
+        , 1
     , 50
     @
 
@@ -107,6 +111,11 @@ class RegionNode
     if regions.length is 0
       return
     for content in flow.getContent()
+      # reset styles
+      content.classList.remove(className)
+      for elem in content.getElementsByClassName(className)
+        elem.classList.remove(className)
+      # apply styles
       elems = []
       if content[prefixed.matches](contentSelector)
         elems.push content
@@ -168,13 +177,6 @@ class RegionNode
     etos = range.compareBoundaryPoints(range.END_TO_START, target)
     target.detach()
     { stoe, stos, etoe, etos }
-
-  resetStyleInFlow: (flow) ->
-    for content in flow.getContent()
-      content.className = content.className.replace(/__INSERTED__\d+/g, '')
-      for elem in content.querySelectorAll('[class^="__INSERTED__"]')
-        elem.className = elem.className.replace(/__INSERTED__\d+/g, '')
-    @
 
 
 window.Region = (s) -> new RegionNode(s)
