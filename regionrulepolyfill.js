@@ -198,7 +198,6 @@
           i++;
           continue;
         }
-        elem.classList.add(className);
         targetRange = range.cloneRange();
         if (comp.stos < 0) {
           targetRange.setStartBefore(elem);
@@ -208,11 +207,11 @@
         frag.classList.add(className);
         targetRange.insertNode(frag);
         range = this.getRange(region, i);
+        if (!range) {
+          break;
+        }
         comp = this.compare(range, elem);
-        console.assert(comp.stos <= 0);
-        console.assert(comp.stoe >= 0);
         if (comp.etoe < 0) {
-          elem.classList.remove(className);
           targetRange = document.createRange();
           targetRange.setStart(range.endContainer, range.endOffset);
           targetRange.setEndAfter(frag);
