@@ -46,68 +46,57 @@ window.addEventListener 'load', ->
       getPrefixedProperty(document, 'getNamedFlows')
 , false
 
+RegionRulePolyfill =
+  sheet: document.head.appendChild(document.createElement 'style').sheet
+  insertCSS: (selector, style) ->
+    if typeof style isnt 'string'
+      style = (for p in Object.keys(style)
+        "#{camelCaseToSnakeCase(p)}: #{style[p]};"
+      ).join('\n')
+    @sheet.insertRule "#{selector} {\n#{style}}", @sheet.cssRules.length
 
-class RegionNode
-  insertCSS: do ->
-    sheet = document.head.appendChild(document.createElement 'style').sheet
-    (selector, style) ->
-      if typeof style isnt 'string'
-        style = (for p in Object.keys(style)
-          "#{camelCaseToSnakeCase(p)}: #{style[p]};"
-        ).join('\n')
-      sheet.insertRule "#{selector} {\n#{style}}", sheet.cssRules.length
-
-  constructor: (@regionSelector) ->
-    @rules = []
-    @timer = {}
-    @handler = {}
-    if supportType is 'basic'
-      if document.readyState is 'complete' # already loaded
-        @initialize()
-      else
-        window.addEventListener 'load', @initialize.bind(@), false
-
-  initialize: ->
+  handler: {}
+  init: ->
     for flow in document[prefixed.getNamedFlows]()
       @update(flow)
       handler = @handler[flow.name] = @update.bind(@, flow)
       for eventName in prefixedRegionfragmentchangeEventNames
         flow.addEventListener eventName, handler, false
-    @
+    return
 
+  timer: {}
   update: (flow, event) ->
     @timer[flow.name] or= setTimeout =>
       if event
         flow.removeEventListener event.type, @handler[flow.name], false
       for rule in @rules
-        @applyStyleInFlow(flow, rule.selector, rule.className)
+        @applyStyleInFlow(flow, rule)
       @timer[flow.name] = null
       if event
         setTimeout =>
           flow.addEventListener event.type, @handler[flow.name], false
         , 1
     , 50
-    @
 
-  addRegionRule: (selector, style) ->
+  rules: []
+  registerRule: (regionSelector, contentSelector, style) ->
     ruleSelector = switch supportType
       when 'full'
-        "#{@regionSelector}::region(#{selector})"
+        "#{regionSelector}::region(#{contentSelector})"
       when 'basic'
         className = '__INSERTED__' + randint(9999999)
-        @rules.push { selector, className }
+        @rules.push { regionSelector, contentSelector, className }
         '.' + className
       when 'polyfill'
-        "#{@regionSelector} #{selector}"
+        regionSelector + ' ' + contentSelector
     @insertCSS(ruleSelector, style)
-    @
 
-  applyStyleInFlow: (flow, contentSelector, className) ->
+  applyStyleInFlow: (flow, { regionSelector, contentSelector, className }) ->
     regions = []
     for r in flow.getRegions()
-      if r[prefixed.matches](@regionSelector)
+      if r[prefixed.matches](regionSelector)
         regions.push(r)
-      regions.push r.querySelectorAll(@regionSelector)...
+      regions.push r.querySelectorAll(regionSelector)...
     if regions.length is 0
       return
     for content in flow.getContent()
@@ -123,7 +112,7 @@ class RegionNode
       for elem in elems
         for region in regions
           @applyStyleInRegion(region, elem, className)
-    @
+    return
 
   getRange: (region, idx) ->
     region[prefixed.getRegionFlowRanges]()[idx]
@@ -164,7 +153,7 @@ class RegionNode
         frag.classList.remove className
         targetRange.insertNode(frag)
       i++
-    @
+    return
 
   compare: (range, elem) ->
     target = document.createRange()
@@ -177,4 +166,10 @@ class RegionNode
     { stoe, stos, etoe, etos }
 
 
-window.Region = (s) -> new RegionNode(s)
+window.addEventListener 'load', ->
+  RegionRulePolyfill.init()
+, false
+window.Region = (regionSelector) ->
+  addRegionRule: (contentSelector, style) ->
+    RegionRulePolyfill.registerRule(regionSelector, contentSelector, style)
+    @
