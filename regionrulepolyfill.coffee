@@ -57,11 +57,31 @@ RegionRulePolyfill =
 
   handler: {}
   init: ->
-    for flow in document[prefixed.getNamedFlows]()
+    @sortNamedFlows()
+    for flow in @namedFlows
       @update(flow)
       handler = @handler[flow.name] = @registerTimer.bind(@, flow)
       for eventName in prefixedRegionfragmentchangeEventNames
         flow.addEventListener eventName, handler, false
+    return
+
+  namedFlows: []
+  sortNamedFlows: ->
+    @namedFlows = []
+    visited = {}
+    flows = document[prefixed.getNamedFlows]()
+    for flow in flows
+      do (flow=flow) =>
+        return if visited[flow.name]
+        visited[flow.name] = true
+        contents = flow.getContent()
+        for f in flows when not visited[f.name]
+          for region in f.getRegions()
+            for content in contents
+              c = region.compareDocumentPosition(content)
+              if (c is 0) or (c & Node.DOCUMENT_POSITION_CONTAINED_BY)
+                arguments.callee(f)
+        @namedFlows.push(flow)
     return
 
   willUpdate: {}
@@ -69,14 +89,13 @@ RegionRulePolyfill =
   registerTimer: (flow, event) ->
     @willUpdate[flow.name] = true
     @timer or= setTimeout =>
-      for f in document[prefixed.getNamedFlows]() when @willUpdate[f.name]
+      for f in @namedFlows when @willUpdate[f.name]
         @willUpdate[f.name] = false
         @update(f, event)
       @timer = null
     , 50
 
   update: (flow, event) ->
-    console.log "#{flow.name} updated"
     if event
       flow.removeEventListener event.type, @handler[flow.name], false
     for rule in @rules

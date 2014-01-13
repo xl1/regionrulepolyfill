@@ -65,7 +65,8 @@
     handler: {},
     init: function() {
       var eventName, flow, handler, _i, _j, _len, _len1, _ref;
-      _ref = document[prefixed.getNamedFlows]();
+      this.sortNamedFlows();
+      _ref = this.namedFlows;
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
         flow = _ref[_i];
         this.update(flow);
@@ -76,6 +77,43 @@
         }
       }
     },
+    namedFlows: [],
+    sortNamedFlows: function() {
+      var flow, flows, visited, _fn, _i, _len,
+        _this = this;
+      this.namedFlows = [];
+      visited = {};
+      flows = document[prefixed.getNamedFlows]();
+      _fn = function(flow) {
+        var c, content, contents, f, region, _j, _k, _l, _len1, _len2, _len3, _ref;
+        if (visited[flow.name]) {
+          return;
+        }
+        visited[flow.name] = true;
+        contents = flow.getContent();
+        for (_j = 0, _len1 = flows.length; _j < _len1; _j++) {
+          f = flows[_j];
+          if (!visited[f.name]) {
+            _ref = f.getRegions();
+            for (_k = 0, _len2 = _ref.length; _k < _len2; _k++) {
+              region = _ref[_k];
+              for (_l = 0, _len3 = contents.length; _l < _len3; _l++) {
+                content = contents[_l];
+                c = region.compareDocumentPosition(content);
+                if ((c === 0) || (c & Node.DOCUMENT_POSITION_CONTAINED_BY)) {
+                  arguments.callee(f);
+                }
+              }
+            }
+          }
+        }
+        return _this.namedFlows.push(flow);
+      };
+      for (_i = 0, _len = flows.length; _i < _len; _i++) {
+        flow = flows[_i];
+        _fn(flow);
+      }
+    },
     willUpdate: {},
     timer: null,
     registerTimer: function(flow, event) {
@@ -83,7 +121,7 @@
       this.willUpdate[flow.name] = true;
       return this.timer || (this.timer = setTimeout(function() {
         var f, _i, _len, _ref;
-        _ref = document[prefixed.getNamedFlows]();
+        _ref = _this.namedFlows;
         for (_i = 0, _len = _ref.length; _i < _len; _i++) {
           f = _ref[_i];
           if (!_this.willUpdate[f.name]) {
@@ -98,7 +136,6 @@
     update: function(flow, event) {
       var rule, _i, _len, _ref,
         _this = this;
-      console.log("" + flow.name + " updated");
       if (event) {
         flow.removeEventListener(event.type, this.handler[flow.name], false);
       }
