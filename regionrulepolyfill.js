@@ -69,34 +69,49 @@
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
         flow = _ref[_i];
         this.update(flow);
-        handler = this.handler[flow.name] = this.update.bind(this, flow);
+        handler = this.handler[flow.name] = this.registerTimer.bind(this, flow);
         for (_j = 0, _len1 = prefixedRegionfragmentchangeEventNames.length; _j < _len1; _j++) {
           eventName = prefixedRegionfragmentchangeEventNames[_j];
           flow.addEventListener(eventName, handler, false);
         }
       }
     },
-    timer: {},
-    update: function(flow, event) {
-      var _base, _name,
-        _this = this;
-      return (_base = this.timer)[_name = flow.name] || (_base[_name] = setTimeout(function() {
-        var rule, _i, _len, _ref;
-        if (event) {
-          flow.removeEventListener(event.type, _this.handler[flow.name], false);
-        }
-        _ref = _this.rules;
+    willUpdate: {},
+    timer: null,
+    registerTimer: function(flow, event) {
+      var _this = this;
+      this.willUpdate[flow.name] = true;
+      return this.timer || (this.timer = setTimeout(function() {
+        var f, _i, _len, _ref;
+        _ref = document[prefixed.getNamedFlows]();
         for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-          rule = _ref[_i];
-          _this.applyStyleInFlow(flow, rule);
+          f = _ref[_i];
+          if (!_this.willUpdate[f.name]) {
+            continue;
+          }
+          _this.willUpdate[f.name] = false;
+          _this.update(f, event);
         }
-        _this.timer[flow.name] = null;
-        if (event) {
-          return setTimeout(function() {
-            return flow.addEventListener(event.type, _this.handler[flow.name], false);
-          }, 1);
-        }
+        return _this.timer = null;
       }, 50));
+    },
+    update: function(flow, event) {
+      var rule, _i, _len, _ref,
+        _this = this;
+      console.log("" + flow.name + " updated");
+      if (event) {
+        flow.removeEventListener(event.type, this.handler[flow.name], false);
+      }
+      _ref = this.rules;
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        rule = _ref[_i];
+        this.applyStyleInFlow(flow, rule);
+      }
+      if (event) {
+        return setTimeout(function() {
+          return flow.addEventListener(event.type, _this.handler[flow.name], false);
+        }, 1);
+      }
     },
     rules: [],
     registerRule: function(regionSelector, contentSelector, style) {

@@ -59,24 +59,32 @@ RegionRulePolyfill =
   init: ->
     for flow in document[prefixed.getNamedFlows]()
       @update(flow)
-      handler = @handler[flow.name] = @update.bind(@, flow)
+      handler = @handler[flow.name] = @registerTimer.bind(@, flow)
       for eventName in prefixedRegionfragmentchangeEventNames
         flow.addEventListener eventName, handler, false
     return
 
-  timer: {}
-  update: (flow, event) ->
-    @timer[flow.name] or= setTimeout =>
-      if event
-        flow.removeEventListener event.type, @handler[flow.name], false
-      for rule in @rules
-        @applyStyleInFlow(flow, rule)
-      @timer[flow.name] = null
-      if event
-        setTimeout =>
-          flow.addEventListener event.type, @handler[flow.name], false
-        , 1
+  willUpdate: {}
+  timer: null
+  registerTimer: (flow, event) ->
+    @willUpdate[flow.name] = true
+    @timer or= setTimeout =>
+      for f in document[prefixed.getNamedFlows]() when @willUpdate[f.name]
+        @willUpdate[f.name] = false
+        @update(f, event)
+      @timer = null
     , 50
+
+  update: (flow, event) ->
+    console.log "#{flow.name} updated"
+    if event
+      flow.removeEventListener event.type, @handler[flow.name], false
+    for rule in @rules
+      @applyStyleInFlow(flow, rule)
+    if event
+      setTimeout =>
+        flow.addEventListener event.type, @handler[flow.name], false
+      , 1
 
   rules: []
   registerRule: (regionSelector, contentSelector, style) ->
