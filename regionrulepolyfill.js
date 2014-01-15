@@ -284,4 +284,6 @@
     };
   };
 
+  window.Region.supportType = supportType;
+
 }).call(this);

@@ -14,3 +14,7 @@ describe 'window.Region()', ->
 
     it 'should allow method chains', ->
       expect(ret.addRegionRule('#content', '')).toBe ret
+
+describe 'Region.supportType', ->
+  it 'should be "polyfill", "basic" or "full" (or "none")', ->
+    expect(['polyfill', 'basic', 'full']).toContain window.Region.supportType

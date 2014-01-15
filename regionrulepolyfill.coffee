@@ -200,3 +200,4 @@ window.Region = (regionSelector) ->
   addRegionRule: (contentSelector, style) ->
     RegionRulePolyfill.registerRule(regionSelector, contentSelector, style)
     @
+window.Region.supportType = supportType
