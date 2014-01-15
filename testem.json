@@ -1,0 +1,13 @@
+{
+  "before_tests":
+    "coffee -c regionrulepolyfill.coffee && coffee -c test/test.coffee",
+  "src_files": [
+    "regionrulepolyfill.coffee",
+    "test/test.coffee"
+  ],
+  "serve_files": [
+    "http://adobe-webplatform.github.io/css-regions-polyfill/cssregions.min.js",
+    "regionrulepolyfill.js",
+    "test/*.js"
+  ]
+}
