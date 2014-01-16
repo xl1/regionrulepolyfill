@@ -129,7 +129,8 @@ RegionRulePolyfill =
     for content in flow.getContent()
       # reset styles
       content.classList.remove(className)
-      for elem in content.getElementsByClassName(className)
+      # getElementsByClassName returns live node list
+      for elem in content.querySelectorAll('.' + className)
         elem.classList.remove(className)
       # apply styles
       elems = []
