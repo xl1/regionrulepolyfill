@@ -4,7 +4,7 @@ camelCaseToSnakeCase = (str) ->
 randint = (max) ->
   Math.random() * (max + 1) |0
 
-getPrefixedProperty = (obj, prop, prefixes=['webkit', 'adobe', 'moz', 'ms']) ->
+getPrefixedPropertyName = (obj, prop, prefixes=['webkit', 'adobe', 'moz', 'ms']) ->
   if obj[prop]?
     return prop
   else for prefix in prefixes
@@ -25,9 +25,9 @@ prefixedRegionfragmentchangeEventNames = [
   'regionfragmentchange'
 ]
 supportType =
-  if getPrefixedProperty(Element::, 'getComputedRegionStyle')?
+  if getPrefixedPropertyName(Element::, 'getComputedRegionStyle')?
     'full'
-  else if getPrefixedProperty(document, 'getNamedFlows')?
+  else if getPrefixedPropertyName(document, 'getNamedFlows')?
     'basic'
   else if window.CSSRegions?
     'polyfill'
@@ -38,12 +38,12 @@ supportType =
 window.addEventListener 'load', ->
   prefixed =
     getRegionFlowRanges:
-      getPrefixedProperty(Element::, 'getRegionFlowRanges')
+      getPrefixedPropertyName(Element::, 'getRegionFlowRanges')
     matches:
-      getPrefixedProperty(Element::, 'matchesSelector') or
-      getPrefixedProperty(Element::, 'matches')
+      getPrefixedPropertyName(Element::, 'matchesSelector') or
+      getPrefixedPropertyName(Element::, 'matches')
     getNamedFlows:
-      getPrefixedProperty(document, 'getNamedFlows')
+      getPrefixedPropertyName(document, 'getNamedFlows')
 , false
 
 RegionRulePolyfill =
