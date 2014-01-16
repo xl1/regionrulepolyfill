@@ -1,0 +1,79 @@
+<!doctype html>
+<meta charset="UTF-8">
+<title>regionrulepolyfill demo/basic</title>
+<!-- Adobe Regions Polyfill -->
+<script src="http://adobe-webplatform.github.io/css-regions-polyfill/cssregions.min.js"></script>
+<script src="../regionrulepolyfill.js"></script>
+<style>
+#content {
+  text-align: justify;
+  line-height: 1.5;
+  -webkit-flow-into: f;
+  -adobe-flow-into: f;
+  flow-into: f;
+}
+.main {
+  max-width: 700px;
+  margin: auto;
+}
+.main div {
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+  padding: 10px;
+  -webkit-flow-from: f;
+  -adobe-flow-from: f;
+  flow-from: f;
+}
+.main .intro {
+  height: 180px;
+  background: #ffc;
+}
+.main div:nth-child(2), .main div:nth-child(3) {
+  float: left;
+  width: 50%;
+  height: 250px;
+}
+.main div:nth-child(4) {
+  clear: both;
+}
+
+.main .intro::region(p) {
+  color: red;
+  font-size: 30px;
+}
+.main .outro::region(p) {
+  text-decoration: underline;
+  margin-right: 10px;
+}
+</style>
+<script>
+Region('.intro').addRegionRule('p', {
+  color: 'red',
+  fontWeight: '700', // bold
+  fontSize: '20px'
+});
+Region('.outro').addRegionRule('p', {
+  textDecoration: 'underline',
+  marginRight: '50px'
+});
+</script>
+
+<section id="content">
+  <h1>Title</h1>
+  <p>
+Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+  </p>
+  <p>
+Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+  </p>
+  <p>
+Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+  </p>
+</section>
+
+<div class="main">
+  <div class="intro"></div>
+  <div></div>
+  <div></div>
+  <div class="outro"></div>
+</div>
